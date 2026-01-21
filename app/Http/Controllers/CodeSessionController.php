@@ -70,6 +70,6 @@ class CodeSessionController extends Controller
         return response()->json([
             'session_id' => $session->id,
             'status' => $session->status,
-        ],201);
+        ],200);
     }
 }   

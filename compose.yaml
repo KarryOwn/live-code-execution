@@ -19,6 +19,7 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - '/var/run/docker.sock:/var/run/docker.sock'
         networks:
             - sail
         depends_on:

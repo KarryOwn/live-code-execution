@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('code_sessions', function (Blueprint $table) {
             $table->uuid('id')->primary();
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreignUuid('problem_id')->constrained('problems')->onDelete('cascade');
             $table->string('language');
             $table->text('code')->nullable();

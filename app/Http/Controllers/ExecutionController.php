@@ -16,9 +16,13 @@ class ExecutionController extends Controller
             'code' => 'required|string' 
         ]);
 
+        $code = $request->input('code');
+
         $execution = $session->executions()->create([
-            'code' => $request->input('code'),
-            'status'      => 'QUEUED', 
+            'code' => $code,
+            'language' => $session->language ?? 'python',
+            'snapshot_source_code' => $code,
+            'status' => 'QUEUED', 
         ]);
 
         // This pushes the ID to Redis 

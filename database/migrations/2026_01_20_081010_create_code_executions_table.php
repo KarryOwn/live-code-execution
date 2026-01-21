@@ -15,10 +15,14 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('code_session_id');
             $table->text('code');
+            $table->string('language')->default('python');
+            $table->text('snapshot_source_code');
             $table->enum('status', ['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'TIMEOUT']);
             $table->text('stdout')->nullable();
             $table->text('stderr')->nullable();
             $table->float('execution_time')->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
             $table->timestamps();
         });
     }

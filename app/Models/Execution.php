@@ -10,21 +10,25 @@ class Execution extends Model
 {
     use HasFactory, HasUuids;
 
+    protected $table = 'code_executions';
+
     protected $fillable = [
         'code_session_id', 
         'code',
+        'language',
+        'snapshot_source_code',
         'status', 
         'stdout', 
         'stderr', 
         'execution_time',
         'started_at',
-        'completed_at'
+        'finished_at'
     ];
 
     protected $casts = [
         'execution_time' => 'integer',
         'started_at' => 'datetime',
-        'completed_at' => 'datetime',
+        'finished_at' => 'datetime',
     ];
 
     // belongs to CodeSession

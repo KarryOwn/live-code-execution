@@ -125,6 +125,10 @@ docker run --rm \
 
 ### Manual check Database
 
+Noted: 
+- The seeded problem_id is `11111111-1111-1111-1111-111111111111` can add more manually if prefer
+- The seeded user_id is `1`
+
 ```bash
 ./vendor/bin/sail tinker
 ```

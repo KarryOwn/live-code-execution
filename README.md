@@ -99,10 +99,11 @@ docker run --rm \
 ./vendor/bin/sail up -d
 
 # Generate application key
+# if failed then ./vendor/bin/sail down then ./vendor/bin/sail up -d 
 ./vendor/bin/sail artisan key:generate
 
 # Run database migrations
-./vendor/bin/sail artisan migrate:fresh --seed
+./vendor/bin/sail artisan migrate --seed
 
 # Install Docker CLI in the Laravel container (required for code execution)
 # Need to rerun this and socket permissions if container restarted

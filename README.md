@@ -114,7 +114,7 @@ docker run --rm \
 ./vendor/bin/sail exec laravel.test chmod 666 /var/run/docker.sock
 
 # Start the queue worker (in background)
-./vendor/bin/sail artisan queue:work &
+./vendor/bin/sail artisan queue:work
 ```
 
 **Important Notes:**

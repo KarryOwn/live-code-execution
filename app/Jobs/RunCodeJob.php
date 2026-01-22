@@ -13,6 +13,7 @@ use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Carbon\Carbon;
 use Exception;
 use Throwable;
+use Illuminate\Support\Facades\Log;
 
 class RunCodeJob implements ShouldQueue
 {
@@ -31,6 +32,14 @@ class RunCodeJob implements ShouldQueue
     public function handle(): void
     {
         $execution = CodeExecution::findOrFail($this->executionId);
+
+        Log::info('Execution lifecycle: QUEUED -> RUNNING', [
+            'execution_id' => $execution->id,
+            'code_session_id' => $execution->code_session_id,
+            'language' => $execution->language,
+            'queued_at' => $execution->created_at,
+            'started_at' => Carbon::now(),
+        ]);
 
         $execution->update([
             'status' => 'RUNNING',
@@ -69,6 +78,13 @@ class RunCodeJob implements ShouldQueue
             } catch (ProcessTimedOutException $e) {
                 $executionTimeMs = round((microtime(true) - $startTime) * 1000);
                 
+                Log::warning('Execution lifecycle: RUNNING -> TIMEOUT (Infinite loop protection triggered)', [
+                    'execution_id' => $execution->id,
+                    'execution_time_ms' => $executionTimeMs,
+                    'timeout_limit_seconds' => $process->getTimeout(),
+                    'finished_at' => Carbon::now(),
+                ]);
+                
                 $execution->update([
                     'status' => 'TIMEOUT',
                     'stderr' => "Execution timed out after {$process->getTimeout()} seconds.\n" .
@@ -83,6 +99,13 @@ class RunCodeJob implements ShouldQueue
             $executionTimeMs = round((microtime(true) - $startTime) * 1000);
 
             if ($process->isSuccessful()) {
+                Log::info('Execution lifecycle: RUNNING -> COMPLETED', [
+                    'execution_id' => $execution->id,
+                    'execution_time_ms' => $executionTimeMs,
+                    'output_length' => strlen($process->getOutput()),
+                    'finished_at' => Carbon::now(),
+                ]);
+                
                 $execution->update([
                     'status' => 'COMPLETED',
                     'stdout' => $process->getOutput(),
@@ -91,6 +114,14 @@ class RunCodeJob implements ShouldQueue
                     'finished_at' => Carbon::now(),
                 ]);
             } else {
+                Log::warning('Execution lifecycle: RUNNING -> FAILED', [
+                    'execution_id' => $execution->id,
+                    'execution_time_ms' => $executionTimeMs,
+                    'exit_code' => $process->getExitCode(),
+                    'error_output' => substr($process->getErrorOutput(), 0, 200),
+                    'finished_at' => Carbon::now(),
+                ]);
+                
                 $execution->update([
                     'status' => 'FAILED',
                     'stderr' => $process->getErrorOutput() ?: 'Container failed to start/run.',
@@ -100,6 +131,13 @@ class RunCodeJob implements ShouldQueue
             }
         } catch (Exception $e) {
             // Fallback for any unexpected error (e.g., docker not available)
+            Log::error('Execution lifecycle: RUNNING -> FAILED (Exception)', [
+                'execution_id' => $execution->id,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'finished_at' => Carbon::now(),
+            ]);
+            
             $execution->update([
                 'status' => 'FAILED',
                 'stderr' => 'Execution error: ' . $e->getMessage(),

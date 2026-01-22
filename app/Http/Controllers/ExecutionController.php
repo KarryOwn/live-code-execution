@@ -6,6 +6,8 @@ use App\Models\CodeSession;
 use App\Models\Execution;
 use App\Jobs\RunCodeJob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Log;
 
 class ExecutionController extends Controller
 {
@@ -16,6 +18,45 @@ class ExecutionController extends Controller
             'code' => 'required|string' 
         ]);
 
+        // Rate limiting: Max 10 executions per minute per session
+        $rateLimitKey = 'execute:' . $session->id;
+        $executed = RateLimiter::attempt(
+            $rateLimitKey,
+            10, 
+            function() {},
+            60  
+        );
+
+        if (!$executed) {
+            Log::warning('Rate limit exceeded for code execution', [
+                'code_session_id' => $session->id,
+                'ip' => $request->ip(),
+            ]);
+            
+            return response()->json([
+                'error' => 'Rate limit exceeded. Maximum 10 executions per minute.',
+                'retry_after' => RateLimiter::availableIn($rateLimitKey)
+            ], 429);
+        }
+
+        // Check for pending/running executions (prevent duplicate abuse)
+        $pendingExecution = $session->executions()
+            ->whereIn('status', ['QUEUED', 'RUNNING'])
+            ->first();
+
+        if ($pendingExecution) {
+            Log::info('Duplicate execution prevented - returning existing', [
+                'existing_execution_id' => $pendingExecution->id,
+                'status' => $pendingExecution->status,
+            ]);
+            
+            return response()->json([
+                'execution_id' => $pendingExecution->id,
+                'status' => $pendingExecution->status,
+                'message' => 'An execution is already in progress for this session'
+            ], 409); 
+        }
+
         $code = $request->input('code');
 
         $execution = $session->executions()->create([
@@ -25,6 +66,14 @@ class ExecutionController extends Controller
             'status' => 'QUEUED', 
         ]);
 
+        Log::info('Execution lifecycle: CREATED -> QUEUED', [
+            'execution_id' => $execution->id,
+            'code_session_id' => $session->id,
+            'language' => $execution->language,
+            'code_length' => strlen($code),
+            'queued_at' => $execution->created_at,
+        ]);
+
         // This pushes the ID to Redis 
         RunCodeJob::dispatch($execution->id);
 
@@ -32,7 +81,7 @@ class ExecutionController extends Controller
         return response()->json([
             'execution_id' => $execution->id,
             'status'       => 'QUEUED'
-        ], 202); // 
+        ], 202); 
     }
 
     // GET /executions/{execution_id}

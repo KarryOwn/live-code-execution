@@ -183,8 +183,19 @@ Base URL: `http://localhost/api/v1`
 
 **Endpoint:** `POST /code-sessions`
 
-**Description:** Creates a new coding session for a user/problem.
+**Description:** Checks if an active session exists. If not, creates one.
 
+**Curl Command**
+```bash
+curl -X POST http://localhost/api/v1/code-sessions \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "user_id": 1,
+    "problem_id": "11111111-1111-1111-1111-111111111111", 
+    "language": "python"
+}'
+```
 **Request:**
 ```json
 {
@@ -211,6 +222,16 @@ Base URL: `http://localhost/api/v1`
 
 **Description:** Updates the code in an existing session (for autosave functionality).
 
+**Curl Command**
+```bash
+curl -X PATCH http://localhost/api/v1/code-sessions/SESSION_ID \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "code": "def two_sum(nums, target):\n    print(\"Autosaved work\")"
+}'
+```
+
 **Request:**
 ```json
 {
@@ -233,6 +254,16 @@ Base URL: `http://localhost/api/v1`
 **Endpoint:** `POST /code-sessions/{session_id}/run`
 
 **Description:** Submits code for execution. Returns immediately with execution ID. Code runs in background.
+
+**Curl Command**
+```bash
+curl -X POST http://localhost/api/v1/code-sessions/SESSION_ID/run \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "code": "print(\"Hello from Docker Container\")"
+}'
+```
 
 **Request:**
 ```json
@@ -261,6 +292,12 @@ Base URL: `http://localhost/api/v1`
 **Endpoint:** `GET /executions/{execution_id}`
 
 **Description:** Retrieves current execution status and results. Poll this endpoint until status is terminal (COMPLETED/FAILED/TIMEOUT).
+
+**Curl Command**
+```bash
+curl -X GET http://localhost/api/v1/executions/EXECUTION_ID \
+  -H "Accept: application/json"
+```
 
 **Response:** `200 OK`
 

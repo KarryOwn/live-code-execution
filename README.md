@@ -40,19 +40,6 @@ A secure, scalable API for executing user-submitted code in isolated Docker cont
 4. **Execution Engine** - Docker containers running user code
 5. **Data Store** - PostgreSQL for persistence
 
-### Execution Flow
-
-1. **Client** submits code via `POST /api/v1/code-sessions/{id}/run`
-2. **API** creates execution record, dispatches job, returns immediately (202)
-3. **Queue** stores job in Redis
-4. **Worker** picks up job, creates isolated Docker container
-5. **Docker** executes code with resource limits and timeout
-6. **Worker** captures output and updates execution record
-7. **Client** polls `GET /api/v1/executions/{id}` for results
-
-For detailed architecture, see [DESIGN.md](DESIGN.md).
-
-
 ## Project Structure
 
 ```
@@ -71,10 +58,7 @@ For detailed architecture, see [DESIGN.md](DESIGN.md).
 ├── database/
 │   └── migrations/                    # Database schema
 ├── routes/
-│   └── api.php                        # API routes
-├── tests/
-│   └── Feature/
-│       └── ExecutionApiTest.php       # API tests
+│   └── api.php                        # API routes       
 ├── compose.yaml                       # Docker Compose config
 ├── DESIGN.md                          # Detailed architecture doc
 └── README.md                          # This file
@@ -188,15 +172,6 @@ Output:
 
 ```
 
-### Run Tests
-
-```bash
-# Run all tests
-docker compose exec laravel.test php artisan test
-
-# Run specific test
-docker compose exec laravel.test php artisan test --filter=ExecutionApiTest
-```
 
 ---
 
@@ -344,89 +319,25 @@ Base URL: `http://localhost/api/v1`
 
 ## Design Decisions
 
-### 1. Queue-Based Execution (vs Synchronous)
+#### 1. Laravel + PostgreSQL + Redis
 
-**Decision:** Execute code asynchronously via Redis queue
+Its just my comfortable framework that i used it on some of my school projects and currently my thesis that also use PostgreSQL and Redis. With many tools for settings up and can also interact with the database easily so that is the reason i choose this framework on this assignment. 
 
-**Rationale:**
-- **Non-blocking:** API responds immediately (202 Accepted)
-- **Scalability:** Workers can be scaled horizontally
-- **Reliability:** Jobs persisted, survive crashes
-- **Control:** Rate limiting, priority queues
+#### 2. Docker-in-Docker Execution
 
-**Trade-off:** Slightly higher latency (polling overhead) vs simpler synchronous approach
+I think Docker is perfect for this because of the strong isolation, controlled environments, language flexibility. With faster boot time compare to VMs which it need to boot its own OS.
 
----
+#### 3. Code Passed via stdin
 
-### 2. Docker Container Isolation (vs Native Execution)
-
-**Decision:** Execute each code submission in isolated Docker container
-
-**Rationale:**
-- **Security:** Prevent malicious code from accessing host
-- **Resource limits:** CPU, memory, process limits enforced
-- **Consistency:** Same environment every time
-- **Language agnostic:** Easy to support multiple languages
-
-**Trade-off:** ~1-2 second startup overhead vs instant native execution
-
-**Security Measures:**
-```bash
-docker run --rm -i \
-  --memory=128m         # Prevent memory exhaustion
-  --cpus=0.5           # Limit CPU usage
-  --pids-limit=50      # Prevent fork bombs
-  --network=none       # No network access
-  --read-only          # Read-only filesystem
-  --tmpfs /tmp         # In-memory temp storage
-  python:3.12-slim python -u
-```
+I chose passing code via stdin instead of mounting files simply because of the simplicity. Mouting files needs to create temp files, clean up,... . On the otherside Mounting files might be better on multi files uploads which i dont think it needed for this project.
 
 ---
+## What I Would Improve With More Time
 
-### 3. Code via stdin (vs Volume Mount)
-
-**Decision:** Pass code to container via stdin instead of file mounting
-
-**Rationale:**
-- **Simplicity:** Avoids Docker-in-Docker volume complexity
-- **No cleanup:** No temp files to manage
-- **Security:** Code never touches filesystem
-- **Reliability:** No permission issues
-
-**Trade-off:** Limited to stdin-compatible languages (works for most interpreters)
-
----
-
-### 4. Polling for Results (vs WebSockets)
-
-**Decision:** Client polls GET endpoint for execution results
-
-**Rationale:**
-- **Simplicity:** Standard HTTP, works everywhere
-- **Caching:** Can use CDN/cache layers
-- **Stateless:** No connection management
-- **Debugging:** Easy to test with curl
-
-**Trade-off:** Higher latency (~500ms) vs real-time WebSocket updates
-
-**For Production:** Would implement WebSockets for better UX
-
----
-
-### 5. PostgreSQL (vs NoSQL)
-
-**Decision:** Use PostgreSQL for all data storage
-
-**Rationale:**
-- **ACID compliance:** Strong consistency guarantees
-- **Relational model:** Clear relationships (sessions → executions)
-- **JSON support:** Flexible for future extensions
-- **Mature tooling:** Excellent ecosystem
-
-**Trade-off:** Vertical scaling limits vs horizontal NoSQL scalability
-
-
+- Front-end demo
+- Queue monitoring
+- Features  testing
+- More languages support
 
 ## Troubleshooting
 
@@ -461,7 +372,7 @@ docker compose exec laravel.test docker ps
 docker compose ps pgsql
 
 # Reset database
-docker compose exec laravel.test php artisan migrate:fresh
+docker compose exec laravel.test php artisan migrate:fresh --seed
 ```
 
 ---

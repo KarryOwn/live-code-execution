@@ -237,17 +237,14 @@ status           VARCHAR(20)
 created_at       TIMESTAMP
 updated_at       TIMESTAMP
 
-INDEX (problem_id)
-INDEX (user_id)
 ```
 
 **code_executions**
 ```sql
 id                    UUID PRIMARY KEY
 code_session_id       UUID FOREIGN KEY
-code                  TEXT                -- Code submitted for this run
+code                  TEXT               
 language              VARCHAR(50)         
-snapshot_source_code  TEXT                -- Code snapshot at execution time
 status                ENUM('QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'TIMEOUT')
 stdout                TEXT NULLABLE
 stderr                TEXT NULLABLE
@@ -257,9 +254,6 @@ finished_at           TIMESTAMP NULLABLE
 created_at            TIMESTAMP
 updated_at            TIMESTAMP
 
-INDEX (code_session_id)
-INDEX (status)
-INDEX (created_at)
 ```
 
 ### Execution States
@@ -399,7 +393,7 @@ try {
 
 #### 1. Laravel + PostgreSQL + Redis
 
-Its just my comfortable framework that i used on some of my school projects and currently my thesis that also use PostgreSQL and Redis. With many tools for settings up and can also interact with the database easily so that is the reason i choose this framework on this assignment. 
+Its just my comfortable framework that i used it on some of my school projects and currently my thesis that also use PostgreSQL and Redis. With many tools for settings up and can also interact with the database easily so that is the reason i choose this framework on this assignment. 
 
 #### 2. Docker-in-Docker Execution
 
@@ -411,7 +405,7 @@ I chose passing code via stdin instead of mounting files simply because of the s
 
 ### What I Optimized For
 
-For me my priority is reliability then come simplicity and final is speed. Ensure the system working correctly as intented, need to be extra careful when involving untrusted code, and I want to keep the project easy to understand, maintain and develop, while also keep the system running in an acceptable latency.
+For me my priority is reliability then come simplicity and final is speed. Ensure the system working correctly as intented, need to be extra careful when involving untrusted code, and I want to keep the project easy to understand, maintain and develop, while also keep the system running within an acceptable latency.
 
 ### Production Readiness Gaps
 

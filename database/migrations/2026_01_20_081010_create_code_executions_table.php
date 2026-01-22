@@ -16,7 +16,6 @@ return new class extends Migration
             $table->foreignUuid('code_session_id');
             $table->text('code');
             $table->string('language')->default('python');
-            $table->text('snapshot_source_code');
             $table->enum('status', ['QUEUED', 'RUNNING', 'COMPLETED', 'FAILED', 'TIMEOUT']);
             $table->text('stdout')->nullable();
             $table->text('stderr')->nullable();

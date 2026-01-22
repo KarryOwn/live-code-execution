@@ -62,7 +62,6 @@ class ExecutionController extends Controller
         $execution = $session->executions()->create([
             'code' => $code,
             'language' => $session->language ?? 'python',
-            'snapshot_source_code' => $code,
             'status' => 'QUEUED', 
         ]);
 

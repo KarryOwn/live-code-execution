@@ -70,7 +70,7 @@ class RunCodeJob implements ShouldQueue
             ];
 
             $process = new Process($command);
-            $process->setInput($execution->snapshot_source_code);  // Pass code via stdin
+            $process->setInput($execution->code);  // Pass code via stdin
             $process->setTimeout(10);  // Hard execution timeout (seconds) – prevents infinite loops
 
             try {

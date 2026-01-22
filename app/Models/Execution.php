@@ -16,7 +16,6 @@ class Execution extends Model
         'code_session_id', 
         'code',
         'language',
-        'snapshot_source_code',
         'status', 
         'stdout', 
         'stderr', 
